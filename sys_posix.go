@@ -1,3 +1,4 @@
+//go:build linux || darwin || freebsd
 // +build linux darwin freebsd
 
 package overseer
@@ -7,6 +8,7 @@ package overseer
 //in some other way on other OSs... TODO!
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"syscall"
@@ -29,11 +31,16 @@ func move(dst, src string) error {
 	//throws errors when crossing device boundaries.
 	//TODO see sys_posix_mv.go
 	if err := exec.Command("mv", src, dst).Run(); err != nil {
+		fmt.Printf("exec mv error: %v", err)
 		return err
 	}
 
 	// Run sync to 'commit' the mv by clearing caches
-	return syncCmd().Run()
+	err := syncCmd().Run()
+	if err != nil {
+		fmt.Printf("exec sync error: %s", err)
+	}
+	return err
 }
 
 func syncCmd() *exec.Cmd {
